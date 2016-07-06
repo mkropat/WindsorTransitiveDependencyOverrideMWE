@@ -28,20 +28,16 @@ namespace WindsorTransitiveDependencyOverride
                 Component.For<HomeController>(),
                 Component.For<IApiClientConfiguration>()
                     .ImplementedBy<FooClientConfiguration>()
-                    .Named("FooConfiguration")
                     .LifestyleTransient(),
                 Component.For<IApiClientConfiguration>()
                     .ImplementedBy<BarClientConfiguration>()
-                    .Named("BarConfiguration")
                     .LifestyleTransient(),
                 Component.For<IApiClient, GenericApiClient>()
                     .Named("FooClient")
-                    .DependsOn(Dependency.OnComponent(
-                        typeof(IApiClientConfiguration), "FooConfiguration")),
+                    .DependsOn(Dependency.OnComponent<IApiClientConfiguration, FooClientConfiguration>()),
                 Component.For<IApiClient, GenericApiClient>()
                     .Named("BarClient")
-                    .DependsOn(Dependency.OnComponent(
-                        typeof(IApiClientConfiguration), "BarConfiguration")),
+                    .DependsOn(Dependency.OnComponent<IApiClientConfiguration, BarClientConfiguration>()),
                 Component.For<FooRepo>()
                     .DependsOn(Dependency.OnComponent(typeof(IApiClient), "FooClient")),
                 Component.For<BarRepo>()
