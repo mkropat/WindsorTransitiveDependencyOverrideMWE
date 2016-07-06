@@ -25,22 +25,28 @@ namespace WindsorTransitiveDependencyOverride
 
             container = new WindsorContainer();
             container.Register(
-                Component.For<HomeController>().LifeStyle.Transient,
-                Component.For<FooRepo>()
-                    .LifeStyle.Transient,
-                Component.For<BarRepo>()
-                    //.DependsOn(Dependency.OnComponent<IApiClientConfiguration, BarClientConfiguration>()) // this does nothing cause the client config is not a direct dependency :(
-                    .LifeStyle.Transient,
-                Component.For<IApiClient>()
-                    .ImplementedBy<GenericApiClient>()
-                    //.DependsOn(Dependency.OnComponent<IApiClientConfiguration, BarClientConfiguration>()) // this overrides for both FooRepo and BarRepo :(
-                    .LifeStyle.Transient,
+                Component.For<HomeController>(),
                 Component.For<IApiClientConfiguration>()
                     .ImplementedBy<FooClientConfiguration>()
-                    .LifeStyle.Transient,
+                    .Named("FooConfiguration")
+                    .LifestyleTransient(),
                 Component.For<IApiClientConfiguration>()
                     .ImplementedBy<BarClientConfiguration>()
-                    .LifeStyle.Transient);
+                    .Named("BarConfiguration")
+                    .LifestyleTransient(),
+                Component.For<IApiClient, GenericApiClient>()
+                    .Named("FooClient")
+                    .DependsOn(Dependency.OnComponent(
+                        typeof(IApiClientConfiguration), "FooConfiguration")),
+                Component.For<IApiClient, GenericApiClient>()
+                    .Named("BarClient")
+                    .DependsOn(Dependency.OnComponent(
+                        typeof(IApiClientConfiguration), "BarConfiguration")),
+                Component.For<FooRepo>()
+                    .DependsOn(Dependency.OnComponent(typeof(IApiClient), "FooClient")),
+                Component.For<BarRepo>()
+                    .DependsOn(Dependency.OnComponent(typeof(IApiClient), "BarClient"))
+                );
 
             var controllerFactory = new WindsorControllerFactory(container.Kernel);
             ControllerBuilder.Current.SetControllerFactory(controllerFactory);
